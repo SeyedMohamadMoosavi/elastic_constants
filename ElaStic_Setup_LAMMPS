@@ -1248,7 +1248,7 @@ for i in Lag_strain_list:
 
 
 
-        for j in range(cell_parameter_boundary[1],len(EIF)):
+        for j in range(cell_parameter_boundary[1]+1,len(EIF)):
             print >>fo,"%s"%EIF[j][:-1] 
             
         fo.close()
