@@ -241,6 +241,10 @@ def findMiddle(input_list):
     else:
         return (input_list[int(middle)])
 
+def parabola(x,a):
+    ydata=a*np.power(x,2)
+    return ydata
+
 flag_bad_fit=False
 A2 = []
 for i in range(1, ECs+1):
@@ -277,14 +281,15 @@ for i in range(1, ECs+1):
     strain_buf=strain[:]
     energy_buf=energy[:]
     # print(len(energy_buf),i)
-    if len(energy_buf)<len(strain_buf):
-        del energy_buf[0]
-        del strain_buf[0]
-    while (energy_buf[0]<energy_buf[1] or energy_buf[0]<findMiddle(energy_buf)):
-        del energy_buf[0]
-        del strain_buf[0]
-        if len(strain_buf)<5:
-            break
+    # if len(energy_buf)<len(strain_buf):
+    #     del energy_buf[0]
+    #     del strain_buf[0]
+    # while (energy_buf[0]<energy_buf[1] or energy_buf[0]<findMiddle(energy_buf)):
+    #     print('removing elements from energy calculation!')
+    #     del energy_buf[0]
+    #     del strain_buf[0]
+    #     if len(strain_buf)<5:
+    #         break
     while len(strain_buf) >= 5: 
         coeffs= np.polyfit(strain_buf, energy_buf, ordr)
         ffit = np.polyval( coeffs,strain_buf)
@@ -507,6 +512,22 @@ GH = 0.50*(GV+GR)
 EH = (9.*BH*GH)/(3.*BH+GH)
 nuH= (1.5*BH-GH)/(3.*BH+GH)
 AVR= 100.*(GV-GR)/(GV+GR)
+
+## directional young's modulus ##
+youngs=[]
+for v in np.eye(3):
+    E_d=np.array([
+                 [ v[0]**4           , (v[0]*v[1])**2    , (v[0]*v[2])**2    , v[0]**2*v[1]*v[2] , v[0]**3*v[2]      , v[0]**3*v[1]      ],
+                 [ (v[0]*v[1])**2    , v[1]**4           , (v[1]*v[2])**2    , v[1]**3*v[2]      , v[0]*v[1]**2*v[2] , v[0]*v[1]**3      ],
+                 [ (v[0]*v[2])**2    , (v[1]*v[2])**2    , v[2]**4           , v[1]*v[2]**3      , v[0]*v[2]**3      , v[0]*v[1]*v[2]**2 ],
+                 [ v[0]**2*v[1]*v[2] , v[1]**3*v[2]      , v[1]*v[2]**3      , v[1]**2*v[2]**2   , v[0]*v[1]*v[2]**2 , v[0]*v[1]**2*v[2] ],
+                 [ v[0]**3*v[2]      , v[0]*v[1]**2*v[2] , v[0]*v[2]**3      , v[0]*v[1]*v[2]**2 , v[0]**2*v[2]**2   , v[0]**2*v[1]*v[2] ],
+                 [ v[0]**3*v[1]      , v[0]*v[1]**3      , v[0]*v[1]*v[2]**2 , v[0]*v[1]**2*v[2] , v[0]**2*v[1]*v[2] , v[0]**2*v[1]**2   ]])
+    S_x=E_d.dot(S.T)
+    youngs.append(1/sum(S_x.diagonal()))
+
+
+
 #--------------------------------------------------------------------------------------------------
 
 #%!%!%--- Writing the output file ---%!%!%!%!%!%!%!%!%!%!%!%!%!%!%!%!%!%!%!%!%!%!%!%!%!%!%!%!%!%!%!
@@ -519,57 +540,55 @@ print >>fo,  '    The output of ElaStic code                                    
              '    Elastic constant (stiffness) matrix in GPa:                             \n'
 
 ###########################
-# #! /usr/bin/env python
-#import numpy as np
-deg2rad=np.pi/180.
-def shift_matrix(a,ix,iy):
-    tmp=np.zeros((3,3))
-    for i in range(0,3):
-        for j in range(0,3):
-            tmp[i,j]=a[(i+ix)%3,(j+iy)%3]
-    return tmp
+## deg2rad=np.pi/180.
+## def shift_matrix(a,ix,iy):
+##     tmp=np.zeros((3,3))
+##     for i in range(0,3):
+##         for j in range(0,3):
+##             tmp[i,j]=a[(i+ix)%3,(j+iy)%3]
+##     return tmp
 
-#cell_angs=np.array([60.0,60.0,60.0])
-#cell_angs=np.array([90.0,90.0,90.0])
-#cell_angs=np.array([90.0,45.0,45.0])
-#cell_angs=deg2rad*cell_angs
-#m=np.array([[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]])
-#v=np.sqrt(1-np.cos(cell_angs[0])**2-np.cos(cell_angs[1])**2-np.cos(cell_angs[2])**2+2*(np.cos(cell_angs[0])*np.cos(cell_angs[1])*np.cos(cell_angs[2])))
-#e=np.array([[1.0,0.0,0.0],[np.cos(cell_angs[2]),np.sin(cell_angs[2]),0.0],[np.cos(cell_angs[1]),(np.cos(cell_angs[0])-np.cos(cell_angs[1])*np.cos(cell_angs[2]))/(np.sin(cell_angs[2])),v/np.sin(cell_angs[2])]])
-## c45=np.cos(45.0*deg2rad)
-## s45=np.sin(45.0*deg2rad)
-## c35=np.cos(35.0*deg2rad)
-## s35=np.sin(35.0*deg2rad)
-## c60=np.cos(60.0*deg2rad)
-## s60=np.sin(60.0*deg2rad)
-e=np.array([[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]])
-t_x=-35.0*deg2rad 
-t_y=45.0*deg2rad 
-t_z=0.0*deg2rad 
-Rx=np.array([[1.0,0.0,0.0],[0,np.cos(t_x),(-1)*np.sin(t_x)],[0.0,np.sin(t_x),np.cos(t_x)]])
-Ry=np.array([[np.cos(t_y),0.0,np.sin(t_y)],[0.0,1.0,0.0],[(-1)*np.sin(t_y),0.0,np.cos(t_y)]])
-Rz=np.array([[np.cos(t_z),(-1)*np.sin(t_z),0.0],[np.sin(t_z),np.cos(t_z),0.0],[0.0,0.0,1.0]])
-m=Ry.dot(Rx.dot(e))
-m=np.linalg.inv(m)
-
-# a=np.array([c45,0,-s45])
-# b=np.array([s60,c60,0])
-# c=np.array([c45*c60,-c45*s60,s45])
-# m=np.vstack((a,b,c))
-#print(m)
-omega=np.dot(m,e)
-# print(omega)
-k1=np.multiply(omega,omega)
-k2=np.multiply(shift_matrix(omega,0,1),shift_matrix(omega,0,2))
-k3=np.multiply(shift_matrix(omega,1,0),shift_matrix(omega,2,0))
-k4=np.multiply(shift_matrix(omega,1,1),shift_matrix(omega,2,2))+np.multiply(shift_matrix(omega,1,2),shift_matrix(omega,2,1))
-C=np.array(C)
-K12=np.hstack((k1,2*k2))
-K34=np.hstack((k3,k4))
-K=np.vstack((K12,K34))
-# print(np.linalg.norm(np.dot(K,np.transpose(K)),'fro'))
-#print(np.dot(np.dot(K,C),np.transpose(K)))
-C_new=K.dot(C.dot(np.transpose(K)))
+#   #cell_angs=np.array([60.0,60.0,60.0])
+#   #cell_angs=np.array([90.0,90.0,90.0])
+#   #cell_angs=np.array([90.0,45.0,45.0])
+#   #cell_angs=deg2rad*cell_angs
+#   #m=np.array([[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]])
+#   #v=np.sqrt(1-np.cos(cell_angs[0])**2-np.cos(cell_angs[1])**2-np.cos(cell_angs[2])**2+2*(np.cos(cell_angs[0])*np.cos(cell_angs[1])*np.cos(cell_angs[2])))
+#   #e=np.array([[1.0,0.0,0.0],[np.cos(cell_angs[2]),np.sin(cell_angs[2]),0.0],[np.cos(cell_angs[1]),(np.cos(cell_angs[0])-np.cos(cell_angs[1])*np.cos(cell_angs[2]))/(np.sin(cell_angs[2])),v/np.sin(cell_angs[2])]])
+#   ## c45=np.cos(45.0*deg2rad)
+#   ## s45=np.sin(45.0*deg2rad)
+#   ## c35=np.cos(35.0*deg2rad)
+#   ## s35=np.sin(35.0*deg2rad)
+#   ## c60=np.cos(60.0*deg2rad)
+#   ## s60=np.sin(60.0*deg2rad)
+#   e=np.array([[1.0,0.0,0.0],[0.0,1.0,0.0],[0.0,0.0,1.0]])
+#   t_x=-35.0*deg2rad 
+#   t_y=45.0*deg2rad 
+#   t_z=0.0*deg2rad 
+#   Rx=np.array([[1.0,0.0,0.0],[0,np.cos(t_x),(-1)*np.sin(t_x)],[0.0,np.sin(t_x),np.cos(t_x)]])
+#   Ry=np.array([[np.cos(t_y),0.0,np.sin(t_y)],[0.0,1.0,0.0],[(-1)*np.sin(t_y),0.0,np.cos(t_y)]])
+#   Rz=np.array([[np.cos(t_z),(-1)*np.sin(t_z),0.0],[np.sin(t_z),np.cos(t_z),0.0],[0.0,0.0,1.0]])
+#   m=Ry.dot(Rx.dot(e))
+#   m=np.linalg.inv(m)
+#   
+#   # a=np.array([c45,0,-s45])
+#   # b=np.array([s60,c60,0])
+#   # c=np.array([c45*c60,-c45*s60,s45])
+#   # m=np.vstack((a,b,c))
+#   #print(m)
+#   omega=np.dot(m,e)
+#   # print(omega)
+#   k1=np.multiply(omega,omega)
+#   k2=np.multiply(shift_matrix(omega,0,1),shift_matrix(omega,0,2))
+#   k3=np.multiply(shift_matrix(omega,1,0),shift_matrix(omega,2,0))
+#   k4=np.multiply(shift_matrix(omega,1,1),shift_matrix(omega,2,2))+np.multiply(shift_matrix(omega,1,2),shift_matrix(omega,2,1))
+#   C=np.array(C)
+#   K12=np.hstack((k1,2*k2))
+#   K34=np.hstack((k3,k4))
+#   K=np.vstack((K12,K34))
+#   # print(np.linalg.norm(np.dot(K,np.transpose(K)),'fro'))
+#   #print(np.dot(np.dot(K,C),np.transpose(K)))
+#   C_new=K.dot(C.dot(np.transpose(K)))
 
 # for i in range(0,6):
 #     print  ''
@@ -629,9 +648,14 @@ C_new=K.dot(C.dot(np.transpose(K)))
 for i in range(0,6):
     print >>fo, '',
     for j in range(0,6):
-        print >>fo, '%5.1f'%(C[i,j]),
+        if j < i:
+            print >>fo, '%7.4s'%(' '),
+        else:
+            print >>fo, '%7.4f'%(C[i,j]),
     print >>fo
 
+print >>fo,'\n\n    Young\'s modulus in three principle axes: %4.2f %4.2f %4.2f \n'%(youngs[0],youngs[1],youngs[2])
+print >>fo,'    max(Young\'s modulus)/min(Young\'s modulus) : %5.3f \n'%(max(youngs)/min(youngs))
 print >>fo,'\n\n    Elastic compliance matrix in 1/GPa: \n'
 
 for i in range(0,6):
