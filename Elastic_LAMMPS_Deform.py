@@ -82,7 +82,6 @@ strin+=" xz final %10.8f"%(xz)
 strin+=" yz final %10.8f"%(yz)
 strin+=" remap units box"
 strin+="\n"
-
 data.insert(index_read_data+1,strin)
 f_input.close()
 f_out=open(input_name,'w')
